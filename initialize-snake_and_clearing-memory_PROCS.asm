@@ -1,3 +1,4 @@
+INCLUDE Irvine32.inc
 initSnake PROC USES EBX EDX
 ; This procedure initializes the snake to the default position
 ; in the center of the screen
