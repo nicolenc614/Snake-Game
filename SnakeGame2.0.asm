@@ -75,8 +75,11 @@ noObstacle: ; No obstacles level
 JMP mainMenu
 box: ; Box obstacle level
 
+JMP mainMenu
+
 rooms: ; Rooms obstacle level
 
+JMP mainMenu
 start: ; sets the necessary flags and calls the main infinite loop
 MOV EAX, 0 ; Clear registers
 MOV EDX, 0
@@ -86,4 +89,20 @@ CALL Paint ; Paint level to terminal screen
 CALL createFood ; Create snake food location, print to screen
 CALL startGame ; Call main infinite loop
 main ENDP
+
+initializeSnake PROC
+
+initializeSnake ENDP
+
+Paint PROC
+
+Paint ENDP
+
+createFood PROC
+
+createFood ENDP
+
+startGame PROC
+
+startGame ENDP
 END main
