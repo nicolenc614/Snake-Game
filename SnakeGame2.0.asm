@@ -1,11 +1,10 @@
 INCLUDE Irvine32.inc
 .DATA
-mainnMenu BYTE "1. Start Game", 0Dh, 0Ah,"2. Choose Speed", 0Dh, 0Ah,
-"3. Choose Obstacle Level", 0Dh, 0Ah, "4. Exit",0Dh, 0Ah, 0
+mainnMenu BYTE "1. Start Game", 0Dh, 0Ah,"2. Select Speed Level", 0Dh, 0Ah,
+"3. Select Obstacle Level", 0Dh, 0Ah, "4. Exit",0Dh, 0Ah, 0
 speedLevel BYTE "1. Normal Speed", 0Dh, 0Ah, "2. 2x Speed", 0Dh, 0Ah, "3. 3x Speed",
 0Dh, 0Ah, "4. 4x Speed", 0Dh, 0Ah, 0
 ObstacleLevel BYTE "1. No Obstacle", 0Dh, 0Ah, "2. Box Obstacle", 0Dh, 0Ah, "3. Rooms Obstacle", 0Dh, 0Ah, 0
-
 collision BYTE "Game Over!", 0
 currentScore BYTE "Score: 0", 0
 delayTime DWORD 150 ; Delay time between frames (game speed)
