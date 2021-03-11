@@ -90,8 +90,7 @@ CALL startGame ; Call main infinite loop
 main ENDP
 
 initializeSnake PROC
-; This procedure initializes the snake to the default position
-; in the center of the screen
+; This procedure places the snake to starting position aka center of screen
 MOV DH, 13 ; Set row number to 13
 MOV DL, 47 ; Set column number to 47
 MOV BX, 1 ; First segment of snake
