@@ -111,6 +111,40 @@ CALL saveIndex ; Write to framebuffer
 RET
 initializeSnake ENDP
 
+clearMemory PROC
+; This procedure clears the framebuffer, resets the snake position and length,
+; and sets all the game related flags back to their default value.
+MOV DH, 0 ; Set the row register to zero
+MOV BX, 0 ; Set the data register to zero
+oLoop: ; Outer loop for matrix indexing (for rows)
+CMP DH, 24 ; Count for 24 rows and break if row number is 24
+; (since indexing starts form 0)
+JE endOLoop
+MOV DL, 0 ; Set the column number to zero
+iLoop: ; Inner loop for matrix indexing (for columns)
+CMP DL, 80 ; Count for 80 columns and
+JE endILoop ; break if column number is 80
+CALL saveIndex ; Call procedure for writing to the framebuffer
+; based on the DH and DL registers
+INC DL ; Increment column number
+JMP iLoop ; Continue inner loop
+endILoop: ; End of innter loop
+INC DH ; Increment row number
+JMP oLoop ; Continue outer loop
+endOLoop: ; End of outer loop
+MOV tailRow, 16 ; Reset coordinates of
+MOV tailColumn, 47 ; snake tail (row and column)
+MOV headRow, 13 ; Reset coordinates of
+MOV headColumn, 47 ; snake head (row and column)
+MOV endGame, 0 ; Clear the end game flag
+MOV deleteTail, 1 ; Set the erase tail flag (no food eaten)
+MOV direction, 'w' ; Set current direction to up
+MOV newDirection, 'w' ; Set new direction to up
+MOV totalScore, 0 ; Reset total score
+RET
+clearMemory ENDP
+
+
 Paint PROC
 
 Paint ENDP
