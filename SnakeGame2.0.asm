@@ -161,9 +161,9 @@ MOV frame[SI], BX ; Save BX into array
 RET
 writeIndexToFrame ENDP
 
-Paint PROC
+PaintObstacle PROC
 
-Paint ENDP
+PaintObstacle ENDP
 
 saveIndex PROC
 
