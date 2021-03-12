@@ -178,6 +178,10 @@ Paint PROC
 
 Paint ENDP
 
+saveIndex PROC
+
+saveIndex ENDP
+
 createFood PROC
 
 createFood ENDP
