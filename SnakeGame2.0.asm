@@ -8,6 +8,29 @@ ObstacleLevel BYTE "1. No Obstacle", 0Dh, 0Ah, "2. Box Obstacle", 0Dh, 0Ah, "3. 
 collision BYTE "Game Over!", 0
 currentScore BYTE "Score: 0", 0
 delayTime DWORD 150 ; Delay time between frames (game speed)
+frame WORD 1920 DUP(0) ; Framebuffer (24x80), size of the game frame
+tailRow BYTE 16d ; Snake tail row number
+tailColumn BYTE 47d ; Snake tail column number
+headRow BYTE 13d ; Snake head row number
+headColumn BYTE 47d ; Snake head column number
+foodRow BYTE 0 ; Food row
+foodColumn BYTE 0 ; Food column
+tempRow BYTE 0 ; Temporary variable for storing row indexes
+tempColumn BYTE 0 ; Temporary variable for storing column indexes
+rowMinus BYTE 0d ; Index of row above current row (row minus)
+columnMinus BYTE 0d ; Index of column left of current column (column minus)
+rowPlus BYTE 0d ; Index of row below current row (row plus)
+columnPlus BYTE 0d ; Index of column right of current column (column plus)
+deleteTail BYTE 1d ; Flag for indicating if tail should be deleted or not
+search WORD 0d ; Variable for storing value of next snake segment
+endGame BYTE 0d ; Flag for indicating that game should be ended (collision)
+totalScore DWORD 0d ; Total score
+direction BYTE 'w' ; Variable for holding the current direction of the snake
+newDirection BYTE 'w' ; Variable for holding the new direction specified by input
+termInpHandle DWORD ? ; Variable for holding the terminal input handle
+numberInput DWORD ? ; Variable for holding number of bytes in input buffer
+temp BYTE 16 DUP(?) ; Variable for holding data of type INPUT_RECORD
+inputRead DWORD ? ; Variable for holding number of read input bytes
 
 .CODE
 main PROC
@@ -70,14 +93,19 @@ CMP AL, '3' ; Rooms level
 JE rooms
 JMP wait2 ; Invalid choice, continue loop
 noObstacle: ; No obstacles level
-
+CALL clearMemory ; Clear framebuffer and reset all game flags
+MOV AL, 1 ; Set flag for level generation in AL and jump
+CALL GenerateLevel ; to level generation section of program
 JMP mainMenu
 box: ; Box obstacle level
-
+CALL clearMemory 
+MOV AL, 2 ; Set flag for level generation in AL and jump
+CALL GenerateLevel 
 JMP mainMenu
-
 rooms: ; Rooms obstacle level
-
+CALL clearMemory 
+MOV AL, 3 ; Set flag for level generation in AL and jump
+CALL GenerateLevel 
 JMP mainMenu
 start: ; sets the necessary flags and calls the main infinite loop
 MOV EAX, 0 ; Clear registers
@@ -87,8 +115,10 @@ CALL initializeSnake ; Initialize snake position
 CALL Paint ; Paint level to terminal screen
 CALL createFood ; Create snake food location, print to screen
 CALL startGame ; Call main infinite loop
+MOV EAX, white + (black * 16)
+CALL SetTextColor ; Game was exited, reset screen color
+JMP mainMenu ; and jump back to main menu
 main ENDP
-
 initializeSnake PROC
 ; This procedure places the snake to starting position aka center of screen
 MOV DH, 13 ; Set row number to 13
