@@ -124,55 +124,42 @@ initializeSnake PROC
 MOV DH, 13 ; Set row number to 13
 MOV DL, 47 ; Set column number to 47
 MOV BX, 1 ; First segment of snake
-CALL saveIndex ; Write to framebuffer
+CALL writeIndexToFrame; Write to framebuffer
 MOV DH, 14 ; Set row number to 14
 MOV DL, 47 ; Set column number to 47
 MOV BX, 2 ; Second segment of snake
-CALL saveIndex ; Write to framebuffer
+CALL writeIndexToFrame; Write to framebuffer
 MOV DH, 15 ; Set row number to 15
 MOV DL, 47 ; Set column number to 47
 MOV BX, 3 ; Third segment of snake
-CALL saveIndex ; Write to framebuffer
+CALL writeIndexToFrame; Write to framebuffer
 MOV DH, 16 ; Set row number to 16
 MOV DL, 47 ; Set column number to 47
 MOV BX, 4 ; Fourth segment of snake
-CALL saveIndex ; Write to framebuffer
+CALL writeIndexToFrame; Write to framebuffer
 RET
 initializeSnake ENDP
 
-clearMemory PROC
-; This procedure clears the framebuffer, resets the snake position and length,
-; and sets all the game related flags back to their default value.
-MOV DH, 0 ; Set the row register to zero
-MOV BX, 0 ; Set the data register to zero
-oLoop: ; Outer loop for matrix indexing (for rows)
-CMP DH, 24 ; Count for 24 rows and break if row number is 24
-; (since indexing starts form 0)
-JE endOLoop
-MOV DL, 0 ; Set the column number to zero
-iLoop: ; Inner loop for matrix indexing (for columns)
-CMP DL, 80 ; Count for 80 columns and
-JE endILoop ; break if column number is 80
-CALL saveIndex ; Call procedure for writing to the framebuffer
-; based on the DH and DL registers
-INC DL ; Increment column number
-JMP iLoop ; Continue inner loop
-endILoop: ; End of innter loop
-INC DH ; Increment row number
-JMP oLoop ; Continue outer loop
-endOLoop: ; End of outer loop
-MOV tailRow, 16 ; Reset coordinates of
-MOV tailColumn, 47 ; snake tail (row and column)
-MOV headRow, 13 ; Reset coordinates of
-MOV headColumn, 47 ; snake head (row and column)
-MOV endGame, 0 ; Clear the end game flag
-MOV deleteTail, 1 ; Set the erase tail flag (no food eaten)
-MOV direction, 'w' ; Set current direction to up
-MOV newDirection, 'w' ; Set new direction to up
-MOV totalScore, 0 ; Reset total score
+writeIndexToFrame PROC USES EAX ESI EDX
+; This procedure accesses the framebuffer and writes a value to the pixel
+; specified by DH (row index) and DL (column index). The pixel value has to be
+; passed through the register BX.
+PUSH EBX ; Save EBX on stack
+MOV BL, DH ; Copy row number to BL
+MOV AL, 80 ; Copy multiplication constant for row number
+MUL BL ; Multiply row index by 80 to get framebuffer segment
+PUSH DX ; Push DX onto stack
+MOV DH, 0 ; Clear DH register, to access the column number
+ADD AX, DX ; Add column offset to get the array index
+POP DX ; Pop old address off of stack
+MOV ESI, 0 ; Clear indexing register
+MOV SI, AX ; Move generated address into ESI register
+POP EBX ; Pop EBX off of stack
+SHL SI, 1 ; Multiply address by two, because elements
+; are of type WORD
+MOV frame[SI], BX ; Save BX into array
 RET
-clearMemory ENDP
-
+writeIndexToFrame ENDP
 
 Paint PROC
 
