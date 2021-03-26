@@ -290,6 +290,109 @@ MOV totalScore, 0 ; Reset total score
 RET
 clearMemory ENDP
 
+StartMainGame PROC USES EAX EBX ECX EDX
+; This procedure is the main process, and has an infinite loop which exits
+; when the user presses ESC or when it comes to a collision with a wall or the
+; snake itself. Upon exit, the procedure resets the game flags to default and
+; clears the framebuffer.
+; The procedure decides which direction change has to be made, depending on the
+; current direction of the snake and the user input from the terminal. The
+; procedure also delays the game between frames, which controls the gamespeed.
+;
+; Notes about console interaction:
+; The ReadConsoleInput procedure reads data structures called INPUT_RECORD from
+; the termninal input program memory. The procedure takes as input the console
+; input handle, a pointer to the buffer for holding INPUT_RECORD messages,
+; number of INPUT_RECORD messages to be read, and a pointer to where to store
+; the number of INPUT_RECORD messages read in the procedure call.
+;
+; The INPUT_RECORD is a structure that has an EventType (WORD) and an Event
+; which can be an event from a keyboard, a mouse, menu event, focus event, etc.
+; The KEY_EVENT_RECORD has bKeyDown (BOOL), wRepeatCount (WORD),
+; wVirtualKeyCode (WORD), wVirtualScanCode (WORD) and so on...
+MOV EAX, white + (black * 16) ; Set text color to white on black
+CALL SetTextColor
+MOV DH, 24 ; Move cursor to bottom left side
+MOV DL, 0 ; of screen, to write the score
+CALL GotoXY ; string
+MOV EDX, OFFSET currentScore
+CALL WriteString
+; Get console input handle and store it in memory
+INVOKE getStdHandle, STD_INPUT_HANDLE
+MOV termInpHandle, EAX
+MOV ECX, 10
+; Read two events from buffer
+INVOKE ReadConsoleInput, termInpHandle, ADDR temp, 1, ADDR inputRead
+INVOKE ReadConsoleInput, termInpHandle, ADDR temp, 1, ADDR inputRead
+; Main infinite loop
+more:
+; Get number of events in input buffer
+INVOKE GetNumberOfConsoleInputEvents, termInpHandle, ADDR numberInput
+MOV ECX, numberInput
+CMP ECX, 0 ; Check if input buffer is empty
+JE done ; Continue loop if buffer is empty
+; Read one event from input buffer and save it at temp
+INVOKE ReadConsoleInput, termInpHandle, ADDR temp, 1, ADDR inputRead
+MOV DX, WORD PTR temp ; Check if EventType is KEY_EVENT,
+CMP DX, 1 ; which is determined by 1st WORD
+JNE SkipEvent ; of INPUT_RECORD message
+MOV DL, BYTE PTR [temp+4] ; Skip key released event
+CMP DL, 0
+JE SkipEvent
+MOV DL, BYTE PTR [temp+10] ; Copy pressed key into DL
+CMP DL, 1Bh ; Check if ESC key was pressed and
+JE quit ; quit the game if it was
+CMP direction, 'w' ; Check if current snake direction
+JE horizontalArrow ; is vertical, and jump to horizontalArrow to
+CMP direction, 's' ; handle direction change if the
+JE horizontalArrow ; change is horizontal
+JMP verticalArrow ; Jump to verticalArrow if the current
+; direction is vertical
+horizontalArrow:
+CMP DL, 25h ; Check if left arrow was in input
+JE leftArrow
+CMP DL, 27h ; Check if right arrow was in input
+JE rightArrow
+JMP SkipEvent ; If up or down arrows were in
+; input, no direction change
+leftArrow:
+MOV newDirection, 'a' ; Set new direction to left
+JMP SkipEvent
+rightArrow:
+MOV newDirection, 'd' ; Set new direction to right
+JMP SkipEvent
+verticalArrow:
+CMP DL, 26h ; Check if up arrow was in input
+JE upArrow
+CMP DL, 28h ; Check if down arrow was in input
+JE downArrow
+JMP SkipEvent ; If left of right arrows were in
+; input, no direction change
+upArrow:
+MOV newDirection, 'w' ; Set new direction to up
+JMP SkipEvent
+downArrow:
+MOV newDirection, 's' ; Set new direction to down
+JMP SkipEvent
+SkipEvent:
+JMP more ; Continue main loop
+done:
+MOV BL, newDirection ; Set new direction as snake
+; direction
+MOV direction, BL
+CALL MovingTheSnake ; Update direction and position
+MOV EAX, DelayTime ; Delay before next iteration (game
+CALL Delay ; speed is influenced this way)
+CMP endGame, 1 ; Check if end game flag is set
+JE quit ; (from a collision)
+JMP more ; Continue main loop
+quit:
+CALL clearMemory ; Set all game related things to
+MOV delayTime, 150 ; default, and go back to main
+; menu
+RET
+StartMainGame ENDP
+
 
 startGame PROC
 
