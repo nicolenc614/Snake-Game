@@ -214,9 +214,30 @@ endRowIndex: ; End of row loop
 RET
 DrawSnakeAndWalls ENDP
 
-createFood PROC
-
-createFood ENDP
+FoodCreation PROC USES EAX EBX EDX
+; This procedure generates food for the snake. It uses a random number to
+; generate the row and column values for the location of the food. It also
+; takes into account the position of the snake and obstacles, so that the food
+; doesn't overlap with the snake or the obstacles.
+foodPosition: ; Loop for food position generation
+MOV EAX, 24 ; Generate a random integer in the
+CALL RandomRange ; range 0 to numRows - 1
+MOV DH, AL
+MOV EAX, 80 ; Generate a random integer in the
+CALL RandomRange ; range 0 to numCol - 1
+MOV DL, AL
+CALL accessFrameIndex; Get content of generated location
+CMP BX, 0 ; Check if content is empty space
+JNE foodPosition ; Loop until location is empty space
+MOV foodRow, DH ; Set food row value
+MOV foodColumn, DL ; Set food column value
+MOV EAX, yellow + (yellow * 16); Set text color to white on cyan
+CALL setTextColor
+CALL GotoXY ; Move cursor to generated position
+MOV AL, ' ' ; Write whitespace to terminal
+CALL WriteChar
+RET
+FoodCreation ENDP
 
 startGame PROC
 
