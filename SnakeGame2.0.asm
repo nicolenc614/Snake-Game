@@ -239,6 +239,24 @@ CALL WriteChar
 RET
 FoodCreation ENDP
 
+accessFrameIndex PROC USES EAX ESI EDX
+; This procedure accesses the framebuffer and returns the value of the pixel
+; specified by DH (row index) and DL (column index). The pixel value gets
+; returned through the register BX.
+MOV BL, DH ; Copy row index into BL
+MOV AL, 80 ; Copy multiplication constant for row number
+MUL BL ; Mulitply row index by 80 to get framebuffer segment
+PUSH DX ; Push DX onto stack
+MOV DH, 0 ; Clear upper byte of DX to get only column index
+ADD AX, DX ; Add column offset to row segment to get pixel address
+POP DX ; Pop DX off of stack
+MOV ESI, 0 ; Clear indexing register
+MOV SI, AX ; Copy generated address into indexing register
+SHL SI, 1 ; Multiply address by 2 since the elements are of type WORD
+MOV BX, frame[SI] ; Copy framebuffer content into BX register
+RET
+accessFrameIndex ENDP
+
 startGame PROC
 
 startGame ENDP
