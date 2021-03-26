@@ -393,8 +393,256 @@ MOV delayTime, 150 ; default, and go back to main
 RET
 StartMainGame ENDP
 
+MovingTheSnake PROC USES EBX EDX
+; This procedure updates the framebuffer, thus moving the snake. The procedure
+; starts from the snake tail, and searches for the next segment in the
+; region of the current segment. All segments get updated, while the last
+; segment gets erased (if no food has been eaten), and a new segment gets
+; addded to the beginning of the snake, depending on the terminal input.
+; This procedure also check if there has been a collision, and if the food was
+; gobbled or not.
+CMP deleteTail, 1 ; Check if erase tail flag is set
+JNE NoETail ; Don't erase the tail if flag is not set
+MOV DH, tailRow ; Copy tail row index into DH
+MOV DL, tailColumn ; Copy tail column index into DL
+CALL accessFrameIndex; Access framebuffer at given index
+DEC BX ; Decrement value returned from framebuffer (this
+; gives us the value of the next segment)
+MOV search, BX ; Copy value of next segment to search
+MOV BX, 0 ; Erase the value at current index from the
+CALL writeIndexToFrame; framebuffer (the snake tail)
+CALL GotoXY ; Erase snake tail pixel from screen
+MOV EAX, white + (black * 16)
+CALL SetTextColor
+MOV AL, ' '
+CALL WriteChar
+PUSH EDX ; Move cursor to bottom right side of the screen
+MOV DL, 79
+MOV DH, 23
+CALL GotoXY
+POP EDX
+MOV AL, DH ; Copy tail row index into AL
+DEC AL ; Get index of row above current row
+MOV rowMinus, AL ; Save index of row above current row
+ADD AL, 2 ; Get index of row below current row
+MOV rowPlus, AL ; Save index of row below current row
+MOV AL, DL ; Copy tail column index into AL
+DEC AL ; Get index of column left of current column
+MOV columnMinus, AL ; Save index of column left of current column
+ADD AL, 2 ; Get index of column right of current column
+MOV columnPlus, AL ; Save index of column right of current column
+CMP rowPlus, 24 ; Check if new index is getting off screen
+JNE next1
+MOV rowPlus, 0 ; Wrap the index around the screen
+next1:
+CMP columnPlus, 80 ; Check if new index is getting off screen
+JNE next2
+MOV columnPlus, 0 ; Wrap the index around the screen
+next2:
+CMP rowMinus, 0 ; Check if new index is getting off screen
+JGE next3
+MOV rowMinus, 23 ; Wrap the index around the screen
+next3:
+CMP columnMinus, 0 ; Check if new index is getting off screen
+JGE next4
+MOV columnMinus, 79 ; Wrap the index around the screen
+next4:
+MOV DH, rowMinus ; Copy row index of pixel above tail into DH
+MOV DL, tailColumn ; Copy column index of pixel above tail into DL
+CALL accessFrameIndex; Access pixel value in framebuffer
+CMP BX, search ; Check if pixel is the next segment of the snake
+JNE melseif1
+MOV tailRow, DH ; Move tail to new location, if it is
+JMP mendif
+melseif1:
+MOV DH, rowPlus ; Copy row index of pixel below tail into DH
+CALL accessFrameIndex; Acces pixel value in framebuffer
+CMP BX, search ; Check if pixel is the next segment of the snake
+JNE melseif2
+MOV tailRow, DH ; Move tail to new location, if it is
+JMP mendif
+melseif2:
+MOV DH, tailRow ; Copy row index of pixel left of tail into DH
+MOV DL, columnMinus ; Copy column index of pixel left of tail into DH
+CALL accessFrameIndex; Access pixel value in framebuffer
+CMP BX, search ; Check if pixes is the next segment of the snake
+JNE melse
+MOV tailColumn, DL ; Move tail to new location, if it is
+JMP mendif
+melse:
+MOV DL, columnPlus ; Move tail to pixel right of tail
+MOV tailColumn, DL
+mendif:
+NoETail:
+MOV deleteTail, 1 ; Set erase tail flag
+MOV DH, tailRow ; Copy row index of tail into DH
+MOV DL, tailColumn ; Copy column index of tail into DL
+MOV tempRow, DH ; Copy row index into memory
+MOV tempColumn, DL ; Copy column index into memory
+whileTrue: ; Infinite loop for going over all the snake
+; segments and adjusting each value
+MOV DH, tempRow ; Copy current row index into DH
+MOV DL, tempColumn ; Copy current column index into DL
+CALL accessFrameIndex; Get pixel value form framebuffer
+DEC BX ; Decrement pixel value to get the value of the
+; next snake segment
+MOV search, BX ; Copy value of next segment into search
+PUSH EBX ; Replace current segment value in framebuffer with
+ADD BX, 2 ; previous segment value (snake is moving, segments
+CALL writeIndexToFrame; are moving)
+POP EBX
+CMP BX, 0 ; Check if the current segment is the head of the
+JE break ; snake
+MOV AL, DH ; Copy row index of current segment into AL
+DEC AL ; Get index of row above current row
+MOV rowMinus, AL ; Save index of row above current row
+ADD AL, 2 ; Get index of row below current row
+MOV rowPlus, AL ; Save index of row below current row
+MOV AL, DL ; Copy column index of current segment into AL
+DEC AL ; Get index of column left of current column
+MOV columnMinus, AL ; Save index of column left of current column
+ADD AL, 2 ; Get index of column right of current column
+MOV columnPlus, AL ; Save index of column right of current column
+CMP rowPlus, 24 ; Check if new index is getting off screen
+JNE next21
+MOV rowPlus, 0 ; Wrap index around screen
+next21:
+CMP columnPlus, 80 ; Check if new index is getting off screen
+JNE next22
+MOV columnPlus, 0 ; Wrap index around screen
+next22:
+CMP rowMinus, 0 ; Check if index is getting off screen
+JGE next23
+MOV rowMinus, 23 ; Wrap index around screen
+next23:
+CMP columnMinus, 0 ; Check if index is getting off screen
+JGE next24
+MOV columnMinus, 79 ; Wrap index around screen
+next24:
+MOV DH, rowMinus ; Copy row index of pixel above segment into DH
+MOV DL, tempColumn ; Copy column index of pixel above segment into DH
+CALL accessFrameIndex; Access pixel value in framebuffer
+CMP BX, search ; Check if pixel is the next segment of the snake
+JNE elseif21
+MOV tempRow, DH ; Move index to new location, if it is
+JMP endif2
+elseif21:
+MOV DH, rowPlus ; Copy row index of pixel below segment into DH
+CALL accessFrameIndex; Access pixel value in framebuffer
+CMP BX, search ; Check if pixel is the next segment of the snake
+JNE elseif22
+MOV tempRow, DH ; Move index to new location, if it is
+JMP endif2
+elseif22:
+MOV DH, tempRow ; Copy row index of pixel left of segment into DH
+MOV DL, columnMinus ; Copy column index of pxl left of segment into DL
+CALL accessFrameIndex; Access pixel value in framebuffer
+CMP BX, search ; Check if pixel is the next segment of the snake
+JNE else2
+MOV tempColumn, DL ; Move index to new location if it is
+JMP endif2
+else2:
+MOV DL, columnPlus ; Move index to pixel right of segment
+MOV tempColumn, DL
+endif2:
+JMP whileTrue ; Continue loop until the snake head is reached
+break:
+MOV AL, headRow ; Copy head row index into AL
+DEC AL ; Get index of row above head row
+MOV rowMinus, AL ; Save index of row above head row
+ADD AL, 2 ; Get index of row below head row
+MOV rowPlus, AL ; Save index of row below head row
+MOV AL, headColumn ; Copy head column index into AL
+DEC AL ; Get index of column left of head column
+MOV columnMinus, AL ; Save index of column left of head column
+ADD AL, 2 ; Get index of column right of head column
+MOV columnPlus, AL ; Save index of column right of head column
+CMP rowPlus, 24 ; Check if new index is getting off screen
+JNE next31
+MOV rowPlus, 0 ; Wrap index around screen
+next31:
+CMP columnPlus, 80 ; Chekc if new index is getting off screen
+JNE next32
+MOV columnPlus, 0 ; Wrap index around screen
+next32:
+CMP rowMinus, 0 ; Check if new index is getting off sreen
+JGE next33
+MOV rowMinus, 23 ; Wrap index around screen
+next33:
+CMP columnMinus, 0 ; Check if new index is getting off screen
+JGE next34
+MOV columnMinus, 79 ; Wrap index around screen
+next34:
+CMP direction, 'w' ; Check if input direction is up
+JNE elseif3
+MOV AL, rowMinus ; Move head row index to new location,
+MOV headRow, AL ; above current location
+JMP endif3
+elseif3:
+CMP direction, 's' ; Check if input direction is down
+JNE elseif32
+MOV AL, rowPlus ; Move head row index to new location,
+MOV headRow, AL ; below current location
+JMP endif3
+elseif32:
+CMP direction, 'a' ; Check if input direction is left
+JNE else3
+MOV AL, columnMinus ; Move head column index to new location,
+MOV headColumn, AL ; left of current location
+JMP endif3
+else3:
+MOV AL, columnPlus ; Move head column index to new location,
+MOV headColumn, AL ; right of current location
+endif3:
+MOV DH, headRow ; Copy new head row index into DH
+MOV DL, headColumn ; Copy new head column index into DL
+CALL accessFrameIndex; Get pixel value of new head location
+CMP BX, 0 ; Check if new head location is empty space
+JE NoHit ; If the new head location is empty space, there
+; has been no collision
+MOV EAX, 4000 ; Set delay time to 4000ms
+MOV DH, 24 ; Move cursor to new location, to write game over
+MOV DL, 11 ; message
+CALL GotoXY
+MOV EDX, OFFSET collision
+CALL WriteString
+CALL Delay ; Call delay to pause game for 4 seconds
+MOV endGame, 1 ; Set end game flag
+RET ; Exit procedure
+NoHit: ; Part of procedure that handles the case where
+MOV BX, 1 ; there's been no collision
+CALL writeIndexToFrame; Write head value to new head location
+MOV cl, foodColumn ; Copy food column to memory
+MOV ch, foodRow ; Copy food row to memory
+CMP cl, DL ; Compare new head column and food column
+JNE foodNotGobbled ; Food has not been eaten
+CMP ch, DH ; Compare new head row and food row
+JNE foodNotGobbled ; Food has not been eaten
+CALL FoodCreation ; Food has been eaten, create new food location
+MOV deleteTail, 0 ; Clear erase tail flag, so that snake grows in
+; next framebuffer update
+MOV EAX, white + (black * 16)
+CALL SetTextColor ; Change background color to white on black
+PUSH EDX ; Push EDX onto stack
+MOV DH, 24 ; Move cursor to new location, to update score
+MOV DL, 7
+CALL GotoXY
+MOV EAX, totalScore ; Move score to EAX and increment it
+INC EAX
+CALL WriteDec
+MOV totalScore, EAX ; Copy updated score value back into memory
+POP EDX ; Pop EDX off of stack
+foodNotGobbled: ; Part of procedure that handles the case where
+CALL GotoXY ; food has not been eaten (just adds head)
+MOV EAX, blue + (white * 16)
+CALL setTextColor ; Change text color to blue on white
+MOV AL, ' ' ; Write whitesoace to new head location
+CALL WriteChar
+MOV DH, 24 ; Move cursor to bottom right side of screen
+MOV DL, 79
+CALL GotoXY
+RET ; Exit procedure
+MovingTheSnake ENDP
 
-startGame PROC
 
-startGame ENDP
 END main
