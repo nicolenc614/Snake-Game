@@ -161,13 +161,58 @@ MOV frame[SI], BX ; Save BX into array
 RET
 writeIndexToFrame ENDP
 
-PaintObstacle PROC
-
-PaintObstacle ENDP
-
-saveIndex PROC
-
-saveIndex ENDP
+DrawSnakeAndWalls PROC USES EAX EDX EBX ESI
+; This procedure reads the contents of the framebuffer, pixel by pixel, and
+; puts them onto the terminal screen. This includes the snake and the walls.
+; The color of the walls can be changed in this procedure. The color of the
+; snake has to be changed here, as well as in the moveSnake procedure.
+MOV EAX, blue + (white * 16) ; Set text color to blue on white
+CALL SetTextColor
+MOV DH, 0 ; Set row number to 0
+rowIndex: ; Loop for indexing of the rows
+CMP DH, 24 ; Check if the indexing has arrived
+JGE endRowIndex ; at the bottom of the screen
+MOV DL, 0 ; Set column number to 0
+columnIndex: ; Loop for indexing of the columns
+CMP DL, 80 ; Check if the indexing has arrived
+JGE endColumnIndex ; at the right side of the screen
+CALL GOTOXY ; Set cursor to current pixel position
+MOV BL, DH ; Generate the framebuffer address from
+MOV AL, 80 ; the row value stored in DH
+MUL BL
+PUSH DX ; Save DX on stack
+MOV DH, 0 ; Clear upper bite of DX
+ADD AX, DX ; Add offset to row address (column adress)
+POP DX ; Restore old value of DX
+MOV ESI, 0 ; Clear indexing register
+MOV SI, AX ; Move pixel address into indexing register
+SHL SI, 1 ; Multiply indexing address by 2, since
+; we're using elements of type WORD in the
+; framebuffer
+MOV BX, frame[SI] ; Get the pixel
+CMP BX, 0 ; Check if pixel is empty space,
+JE NoWalls ; and don't print it if is
+CMP BX, 0FFFFh ; Check if pixel is part of a wall
+JE printHurdle ; Jump to segment for printing walls
+MOV AL, ' ' ; Pixel is part of the snake, so print
+CALL WriteChar ; whitespace
+JMP noWalls ; Jump to end of loop
+PrintHurdle: ; Segment for printing the walls
+MOV EAX, red + (red * 16) ; Change the text color to red (wall color)
+CALL SetTextColor
+MOV AL, ' ' ; Print whitespace
+CALL WriteChar
+MOV EAX, blue + (white * 16) ; Change the text color back to
+CALL SetTextColor ; blue on white
+NoWalls:
+INC DL ; Increment the column number
+JMP columnIndex ; Continue column indexing
+endColumnIndex: ; End of column loop
+INC DH ; Increment the row number
+JMP rowIndex ; Continue row indexing
+endRowIndex: ; End of row loop
+RET
+DrawSnakeAndWalls ENDP
 
 createFood PROC
 
