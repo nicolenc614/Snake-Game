@@ -766,28 +766,90 @@ GenerateObstacle PROC
     roomObstacle: ; Section for generating rooms obstacle
     CMP AL, 3
     JNE mazeObstacle
-    MOV newDirection, 'w' ; Set the default direction to up, as not to run
-    MOV DH, 11 ; immediately into a wall
-    MOV DL, 0 ; Set row and column numbers to 11 and 0
+    MOV newDirection, 'w' ; Set the default direction to up
+    MOV DH, 8 ; start at row 8
+    MOV DL, 0 ; Set row and column numbers to 8 and 0
     MOV BX, 0FFFFh ; Set value for writing into framebuffer
-    cLoop2: ; Loop for painting a horizontal line in the middle
-    ; of the screen (row 11)
-    CMP DL, 80 ; Check if right side of screen was reached
+    cLoop2: ; Loop for painting a horizontal line of the screen (row 8)
+    CMP DL, 35 ; Check if right side of screen was reached at 35
     JE endCLoop2
     CALL writeIndexToFrame; Write obstacle value to framebuffer
     INC DL ; Increment column number
-    JMP cLoop2 ; Continue until right side of screen is reached
-    endCloop2: ; Prepare for vertical line painting
-    MOV DH, 0 ; Start from top of screen
-    MOV DL, 39 ; Vertical line will be at row 39
-    rLoop2: ; Loop for patining a vertical line in the middle
-    CMP DH, 24 ; of the screen (column 39)
-    JE endRLoop2
-    CALL writeIndexToFrame; Write obstacle value to framebuffer
-    INC DH ; Increment row number
-    JMP rLoop2 ; Continue until bottom of screen is reached
-    endRLoop2: ; Return from procedure after painting both lines
+    JMP cLoop2 ; Continue until right side of screen is reached at 35
 
+    endCloop2: ; Prepare for next horizontal line painting
+    MOV DH, 8 ; Start from row 8
+    MOV DL, 50 ; horizontal line starts at column 50
+    cLoop21: 
+    CMP DL, 80 
+    JE endCLoop21
+    CALL writeIndexToFrame
+    INC DL 
+    JMP cLoop21 
+    endCloop21: 
+    MOV DH, 16 
+    MOV DL, 0 
+
+    cLoop22: 
+    CMP DL, 35 
+    JE endCLoop22
+    CALL writeIndexToFrame
+    INC DL 
+    JMP cLoop22 
+    endCloop22: 
+    MOV DH, 16 
+    MOV DL, 50 
+
+    cLoop23: 
+    
+    CMP DL, 80 
+    JE endCLoop23
+    CALL writeIndexToFrame
+    INC DL 
+    JMP cLoop23 
+    endCloop23: 
+    MOV DH, 0 
+    MOV DL, 35 
+
+    rLoop2: ; Loop for patining a vertical line 
+    CMP DH, 6 ; of the screen (column 6)
+    JE endRLoop2
+    CALL writeIndexToFrame
+    INC DH ; Increment row number
+    JMP rLoop2 ; Continue until bottom of screen is reached at 6
+    endRLoop2: ; Return from procedure after painting the line
+    MOV DH, 19 
+    MOV DL, 35 
+
+    rLoop21: 
+    CMP DH, 24 
+    JE endRLoop21
+    CALL writeIndexToFrame
+    INC DH 
+    JMP rLoop21 
+    endRLoop21: 
+    MOV DH, 0 
+    MOV DL, 50 
+
+    rLoop22: 
+    CMP DH, 6 
+    JE endRLoop22
+    CALL writeIndexToFrame
+    INC DH 
+    JMP rLoop22 
+    endRLoop22: 
+    MOV DH, 19 
+    MOV DL, 50 
+
+    rLoop23: 
+    CMP DH, 24 
+    JE endRLoop23
+    CALL writeIndexToFrame
+    INC DH 
+    JMP rLoop23 
+    endRLoop23: 
+    
+    RET
     mazeObstacle: ; maze obstacle loop
     MOV newDirection, 'w' ; Set the default direction to up, as not to run
     MOV DH, 0
